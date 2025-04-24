@@ -1,7 +1,7 @@
 .DS_Store
 __pycache__/
 # local bundle files
-**/.databricks/*
+**/.databricks/
 .idea
 .vscode
 mlruns
@@ -13,3 +13,6 @@ venv
 *.egg-info/
 build
 dist
+.venv/
+**/.venv/
+typings/

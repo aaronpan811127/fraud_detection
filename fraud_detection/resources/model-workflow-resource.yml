@@ -23,13 +23,15 @@ resources:
         - task_key: Train
           job_cluster_key: model_training_job_cluster
           notebook_task:
-            notebook_path: ../training/notebooks/Train.py
+            notebook_path: ../training/notebooks/Train.ipynb
             base_parameters:
               env: ${bundle.target}
               # TODO: Update training_data_path
-              training_data_path: /databricks-datasets/nyctaxi-with-zipcodes/subsampled
-              experiment_name: ${var.experiment_name}
-              model_name: ${var.catalog_name}.fraud_detection.${var.model_name}
+              training_data_path: /Volumes/${var.catalog_name}/fraud_detection/raw/Fraud_final-1.csv
+              experiment_name: ${resources.experiments.experiment.name}
+              model_name: ${var.catalog_name}.fraud_detection.${resources.registered_models.model.name}
+              result_table: ${var.catalog_name}.fraud_detection.training_result
+              training_table: ${var.catalog_name}.fraud_detection.training_input              
               # git source information of current ML resource deployment. It will be persisted as part of the workflow run
               git_source_info: url:${bundle.git.origin_url}; branch:${bundle.git.branch}; commit:${bundle.git.commit}
           
@@ -40,7 +42,7 @@ resources:
           notebook_task:
             notebook_path: ../validation/notebooks/ModelValidation.py
             base_parameters:
-              experiment_name: ${var.experiment_name}
+              experiment_name: ${resources.experiments.experiment.name}
               # The `run_mode` defines whether model validation is enabled or not.
               # It can be one of the three values:
               # `disabled` : Do not run the model validation notebook.
