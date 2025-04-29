@@ -1,0 +1,55 @@
+name: Training Unit and Integration Tests for fraud_detection
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'fraud_detection/**'
+      - '.github/workflows/fraud_detection-run-tests.yml'
+
+defaults:
+  run:
+    working-directory: ./fraud_detection/
+
+env:
+  DATABRICKS_CLIENT_ID: ${{ secrets.STAGING_DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.STAGING_DATABRICKS_CLIENT_SECRET }}  
+  
+
+concurrency: fraud_detection-training-integration-test-staging
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install -r ../test-requirements.txt
+      - name: Run tests with pytest
+        run: |
+            pytest
+
+  integration_test:
+    needs: unit_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - uses: databricks/setup-cli@v0.236.0
+      - name: Validate Bundle For Test Deployment Target in Staging Workspace
+        id: validate
+        run: |
+          databricks bundle validate -t test
+      - name: Deploy Bundle to Test Deployment Target in Staging Workspace
+        id: deploy
+        run: |
+          databricks bundle deploy -t test
+      - name: Run Training Workflow for Test Deployment Target in Staging Workspace
+        id: training
+        run: |
+          databricks bundle run model_training_job -t test

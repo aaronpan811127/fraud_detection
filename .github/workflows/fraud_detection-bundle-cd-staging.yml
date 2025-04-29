@@ -1,0 +1,36 @@
+# This GitHub workflow deploys Bundle resources (ML resource config and more)
+# defined under fraud_detection/resources/*
+# and fraud_detection/databricks.yml with staging deployment target configs,
+# when PRs are merged into the default branch
+name: Bundle Deployment for fraud_detection Staging
+
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: ./fraud_detection
+
+env:
+  DATABRICKS_CLIENT_ID: ${{ secrets.STAGING_DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.STAGING_DATABRICKS_CLIENT_SECRET }}  
+  
+
+jobs:
+  staging:
+    concurrency: fraud_detection-staging-bundle-job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@v0.236.0
+      - name: Validate Bundle For Staging
+        id: validate
+        run: |
+          databricks bundle validate -t staging
+      - name: Deploy Bundle to Staging
+        id: deploy
+        run: |
+          databricks bundle deploy -t staging
